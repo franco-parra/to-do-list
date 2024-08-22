@@ -38,6 +38,12 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Support for multiple build strategies for fixtures (saved instances, unsaved instances and attribute hashes)
+  gem "factory_bot_rails"
+
+  # Generate synthetic data
+  gem "faker"
 end
 
 gem "devise"
