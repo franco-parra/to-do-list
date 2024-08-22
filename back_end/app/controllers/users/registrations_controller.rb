@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Users::RegistrationsController < Devise::RegistrationsController
+  include ResponseHandlerConcern
   # before_action :configure_sign_up_params, only: [:create]
   # before_action :configure_account_update_params, only: [:update]
 
@@ -10,9 +11,26 @@ class Users::RegistrationsController < Devise::RegistrationsController
   # end
 
   # POST /resource
-  # def create
-  #   super
-  # end
+  def create
+    build_resource(sign_up_params)
+
+    resource.save
+    yield resource if block_given?
+
+    if resource.persisted?
+      if resource.active_for_authentication?
+        sign_up(resource_name, resource)
+        render json: success_response(message: "User signed up successfully", data: { user: resource.as_json(except: [:jti]) }), status: :created
+      else
+        expire_data_after_sign_in!
+        render json: success_response(message: "User signed up, but requires activation", data: { user: resource.as_json(except: [:jti]) }), status: :created
+      end
+    else
+      clean_up_passwords resource
+      set_minimum_password_length
+      render json: error_response(message: "User creation failed", errors: resource.errors), status: :unprocessable_entity
+    end
+  end
 
   # GET /resource/edit
   # def edit
