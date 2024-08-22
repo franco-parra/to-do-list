@@ -313,4 +313,14 @@ Devise.setup do |config|
   # When set to false, does not sign a user in automatically after their password is
   # changed. Defaults to true, so a user is signed in automatically after changing a password.
   # config.sign_in_after_change_password = true
+
+  # Configure the secret key that will be used to sign generated tokens.
+  # The secret key is stored using Encrypted Credentials.
+  # Read more:
+  # - Secret Credentials: https://edgeguides.rubyonrails.org/security.html#environmental-security
+  # - Devise JWT configuration: https://github.com/waiting-for-dev/devise-jwt?tab=readme-ov-file#secret-key-configuration
+  config.jwt do |jwt|
+    jwt.secret = Rails.application.credentials.devise_jwt_secret_key!
+    jwt.expiration_time = 1.day.to_i
+  end
 end
