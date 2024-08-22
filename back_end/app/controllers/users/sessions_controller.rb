@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Users::SessionsController < Devise::SessionsController
+  include ResponseHandlerConcern
   # before_action :configure_sign_in_params, only: [:create]
 
   # GET /resource/sign_in
@@ -17,6 +18,10 @@ class Users::SessionsController < Devise::SessionsController
   # def destroy
   #   super
   # end
+
+  def respond_to_on_destroy
+    render json: success_response(message: "Signed out successfully", data: nil), status: :ok
+  end
 
   # protected
 
