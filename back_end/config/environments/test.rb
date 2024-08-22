@@ -64,4 +64,13 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # API Mode changes the order of the middleware stack, and this can 
+  # cause problems for Devise::Test::IntegrationHelpers. This problem 
+  # usually surfaces as an undefined method `[]=' for nil:NilClass error 
+  # when using integration test helpers, such as #sign_in. The solution is 
+  # simply to reorder the middlewares.
+  # Read more: https://github.com/heartcombo/devise?tab=readme-ov-file#testing
+  config.middleware.insert_before Warden::Manager, ActionDispatch::Cookies
+  config.middleware.insert_before Warden::Manager, ActionDispatch::Session::CookieStore
 end
