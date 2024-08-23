@@ -1,28 +1,20 @@
 require "test_helper"
 
 class AuthenticationTest < ActionDispatch::IntegrationTest
-  # If we don't include this method, then all `factory2_bot` will need
+  # If we don't include this method, then all `factory_bot` will need
   # to be prefaced with `FactoryBot`.
   # Read more: https://github.com/thoughtbot/factory_bot/blob/main/GETTING_STARTED.md#minitest-rails
   include FactoryBot::Syntax::Methods
   
   setup do
     @user_attributes = attributes_for :user
-    post user_registration_path, params: { user: @user_attributes }  
-    assert_response :success
-
-    @user = User.find_by(email: @user_attributes[:email])
-    assert_not_nil @user
-
-    @headers = { "Authorization": response.headers["Authorization"] }
+    register_user
+    authenticate_user(:success)
   end
 
   test "sign out user" do
-    delete destroy_user_session_path, headers: @headers 
-    assert_response :success
+    sign_out_user
     
-    @headers = { "Authorization": response.headers["Authorization"] }
-
     get edit_user_registration_path, headers: @headers
     assert_response :unauthorized
   end
@@ -32,24 +24,39 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
       delete user_registration_path, headers: @headers
     end
 
-    post user_session_path, params: { user: @user_attributes }
-    assert_response :unauthorized
+    authenticate_user(:unauthorized)
   end
 
   test "sign in with correct credentials" do
-    delete destroy_user_session_path, headers: @headers
-    assert_response :success
-
-    post user_session_path, params: { user: @user_attributes }
-    assert_response :success
+    sign_out_user
+    authenticate_user(:success)
   end
 
   test "sign in with incorrect credentials" do
-    delete destroy_user_session_path, headers: @headers
+    sign_out_user
+    @user_attributes[:password] += "@"
+
+    authenticate_user(:unauthorized)
+  end
+
+  private
+
+  def register_user
+    post user_registration_path, params: { user: @user_attributes }  
     assert_response :success
 
-    @user_attributes[:password] = @user_attributes[:password] + "@"
+    @user = User.find_by(email: @user_attributes[:email])
+    assert_not_nil @user
+  end
+
+  def authenticate_user(expected_response)
     post user_session_path, params: { user: @user_attributes }
-    assert_response :unauthorized
+    assert_response expected_response
+    @headers = { "Authorization": response.headers["Authorization"] } if expected_response == :success
+  end
+
+  def sign_out_user
+    delete destroy_user_session_path, headers: @headers
+    assert_response :success
   end
 end
