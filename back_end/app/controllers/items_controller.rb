@@ -7,6 +7,7 @@ class ItemsController < ApplicationController
 
   def create
     item = @task.items.new(item_params)
+    authorize! :create, item
 
     if item.save
       render json: success_response(message: "Resource created succesfully", data: { item: item }), status: :created
@@ -16,6 +17,8 @@ class ItemsController < ApplicationController
   end
 
   def destroy
+    authorize! :destroy, @item
+
     begin
       @item.destroy!
       render json: success_response(message: "Resource deleted successfully", data: nil), status: :ok
@@ -25,6 +28,8 @@ class ItemsController < ApplicationController
   end
 
   def update
+    authorize! :update, @item
+    
     if @item.update(item_params)
       render json: success_response(message: "Resource updated successfully", data: { item: @item }), status: :ok
     else
