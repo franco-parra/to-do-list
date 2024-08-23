@@ -23,5 +23,17 @@ FactoryBot.define do
     trait :invalid_password do
       password { "x" }
     end
+
+    trait :with_fixed_name do
+      name { "Fixed Name" }
+    end
+
+    trait :with_fixed_email do
+      email { "fixed_email@example.com" }
+    end
+
+    trait :with_fixed_password do
+      password { "fixed_password" }
+    end
   end
 end
