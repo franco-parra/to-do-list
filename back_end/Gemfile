@@ -46,5 +46,10 @@ group :development, :test do
   gem "faker"
 end
 
+group :test do
+  # Use Timecop to test time-dependent code and freeze time
+  gem "timecop"
+end
+
 gem "devise"
 gem "devise-jwt"
