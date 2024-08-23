@@ -5,15 +5,18 @@ class TasksController < ApplicationController
   before_action :set_task, only: [:show, :update, :destroy]
   
   def index
+    authorize! :read, @task
     render json: success_response(message: "Resources retrieved successfully", data: { tasks: current_user.tasks }), status: :ok
   end
 
   def show
+    authorize! :read, @task
     render json: success_response(message: "Resource retrieved succesfully", data: { task: @task }), status: :ok
   end
 
   def create
     task = current_user.tasks.new(task_params)
+    authorize! :create, task
 
     if task.save
       render json: success_response(message: "Resource created successfully", data: { task: task }), status: :created
@@ -23,6 +26,8 @@ class TasksController < ApplicationController
   end
 
   def update
+    authorize! :update, @task
+
     if @task.update(task_params)
       render json: success_response(message: "Resource updated successfully", data: { task: @task }), status: :ok
     else
@@ -31,6 +36,8 @@ class TasksController < ApplicationController
   end
 
   def destroy
+    authorize! :destroy, @task
+    
     begin
       @task.destroy!
       render json: success_response(message: "Resource deleted successfully", data: nil), status: :ok
