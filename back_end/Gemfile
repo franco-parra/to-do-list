@@ -53,3 +53,6 @@ end
 
 gem "devise"
 gem "devise-jwt"
+
+# Authorization library which restricts what resources a given user is allowed to access.
+gem "cancancan"
