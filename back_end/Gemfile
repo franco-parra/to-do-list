@@ -44,6 +44,9 @@ group :development, :test do
 
   # Generate synthetic data
   gem "faker"
+
+  # RSpec testing framework as an alternative to the default testing framework, Minitest.
+  gem "rspec-rails"
 end
 
 group :test do
