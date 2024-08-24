@@ -14,7 +14,7 @@ RSpec.describe "Task management", type: :request do
     Timecop.return
   end
 
-  describe "Creating a new task" do
+  describe "POST /tasks" do
     context "with valid attributes" do
       it "creates the task successfully" do
         task_attributes = attributes_for :task
@@ -41,23 +41,25 @@ RSpec.describe "Task management", type: :request do
     end
   end
 
-  describe "When a task already exists" do
+  context "when a task already exists" do
     let!(:task) { create(:task, user: user) }
     let(:task_attributes) { attributes_for :task }
     
-    context "updating the task with valid attributes" do
-      it "updates the task successfully" do
-        put task_path(task.id), params: { task: task_attributes }, headers: headers
-        expect(response).to have_http_status(:success)
+    describe "PUT /tasks/:id" do
+      context "with valid attributes" do
+        it "updates the task successfully" do
+          put task_path(task.id), params: { task: task_attributes }, headers: headers
+          expect(response).to have_http_status(:success)
 
-        task.reload
-        expect(task.title).to eq(task_attributes[:title])
-        expect(task.description).to eq(task_attributes[:description])
-        expect(task.due_date).to eq(task_attributes[:due_date])
+          task.reload
+          expect(task.title).to eq(task_attributes[:title])
+          expect(task.description).to eq(task_attributes[:description])
+          expect(task.due_date).to eq(task_attributes[:due_date])
+        end
       end
     end
 
-    context "deleting the task" do
+    describe "DELETE /tasks/:id" do
       it "deletes the task successfully" do
         expect {
           delete task_path(task.id), headers: headers
