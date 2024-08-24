@@ -6,7 +6,9 @@ RSpec.describe "User authentication", type: :request do
   
   describe "POST /users" do
     it "registers a user successfully" do
-      post user_registration_path, params: { user: user_attributes }
+      expect {
+        post user_registration_path, params: { user: user_attributes }
+      }.to change(User, :count).by(1)
       expect(response).to have_http_status(:success)
     end
   end

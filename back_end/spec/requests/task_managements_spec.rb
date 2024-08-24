@@ -32,7 +32,9 @@ RSpec.describe "Task management", type: :request do
 
     context "with invalid attributes" do
       it "fails to create the task and return error messages" do
-        post tasks_path, params: { task: attributes_for(:task, :empty_title, :empty_description, :empty_due_date) }, headers: headers
+        expect {
+          post tasks_path, params: { task: attributes_for(:task, :empty_title, :empty_description, :empty_due_date) }, headers: headers
+        }.not_to change(Task, :count)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(parsed_response[:errors][:title]).to include("can't be blank")
         expect(parsed_response[:errors][:description]).to include("can't be blank")

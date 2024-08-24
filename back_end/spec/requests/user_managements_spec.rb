@@ -24,7 +24,9 @@ RSpec.describe "User management", type: :request do
     
     context "with invalid attributes" do
       it "returns error for empty fields" do
-        post user_registration_path, params: { user: attributes_for(:user, :empty_name, :empty_email, :empty_password) }
+        expect {
+          post user_registration_path, params: { user: attributes_for(:user, :empty_name, :empty_email, :empty_password) }
+        }.not_to change(User, :count)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(parsed_response[:errors][:name]).to include("can't be blank")
         expect(parsed_response[:errors][:email]).to include("can't be blank")
@@ -32,7 +34,9 @@ RSpec.describe "User management", type: :request do
       end
 
       it "returns error for invalid email and short password" do
-        post user_registration_path, params: { user: attributes_for(:user, :invalid_email, :invalid_password) }
+        expect {
+          post user_registration_path, params: { user: attributes_for(:user, :invalid_email, :invalid_password) }
+        }.not_to change(User, :count)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(parsed_response[:errors][:email]).to include("is invalid")
         expect(parsed_response[:errors][:password]).to include("is too short (minimum is 6 characters)")

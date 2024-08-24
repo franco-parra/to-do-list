@@ -33,7 +33,9 @@ RSpec.describe "Item management", type: :request do
     context "with invalid attributes" do
       it "fails to create the item due to missing content" do
         item_attributes = attributes_for :item, :empty_content, :empty_completed
-        post task_items_path(task.id), params: { item: item_attributes }, headers: headers
+        expect {
+          post task_items_path(task.id), params: { item: item_attributes }, headers: headers
+        }.not_to change(Item, :count)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(parsed_response[:errors][:content]).to include("can't be blank")
         expect(parsed_response[:errors][:completed]).to include("can't be blank")
