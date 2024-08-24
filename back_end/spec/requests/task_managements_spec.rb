@@ -23,6 +23,7 @@ RSpec.describe "Task management", type: :request do
         }.to change(Task, :count).by(1)
 
         task = Task.find_by(id: parsed_response[:data][:task][:id])
+        expect(task).not_to be_nil
         expect(task.title).to eq(task_attributes[:title])
         expect(task.description).to eq(task_attributes[:description])
         expect(task.due_date).to eq(task_attributes[:due_date])
