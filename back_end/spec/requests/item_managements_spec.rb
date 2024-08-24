@@ -14,7 +14,7 @@ RSpec.describe "Item management", type: :request do
     Timecop.return
   end
 
-  describe "Creating a new item for a task" do
+  describe "POST /tasks/:task_id/items" do
     context "with valid attributes" do
       it "creates the item successfully" do
         item_attributes = attributes_for :item, :completed
@@ -31,32 +31,34 @@ RSpec.describe "Item management", type: :request do
     end
 
     context "with invalid attributes" do
-      it "fails to create the item and returns error messages" do
+      it "fails to create the item due to missing content" do
         item_attributes = attributes_for :item, :empty_content, :empty_completed
         post task_items_path(task.id), params: { item: item_attributes }, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(parsed_response[:errors][:content]).to include("can't be blank")
-        expect(parsed_response[:errors][:content]).to include("can't be blank")
+        expect(parsed_response[:errors][:completed]).to include("can't be blank")
       end
     end
   end
 
-  describe "When an item already exists" do
+  context "when an item already exists" do
     let!(:item) { create(:item, :completed, task: task) }
     let(:item_attributes) { attributes_for :item, :completed }
     
-    context "updating the item with valid attributes" do
-      it "updates the item successfully" do
-        put task_item_path(task.id, item.id), params: { item: item_attributes }, headers: headers
-        expect(response).to have_http_status(:success)
-
-        item.reload
-        expect(item.content).to eq(item_attributes[:content])
-        expect(item.completed).to eq(item_attributes[:completed])
+    describe "PUT /tasks/:task_id/items/:id" do
+      context "with valid attributes" do
+        it "updates the item successfully" do
+          put task_item_path(task.id, item.id), params: { item: item_attributes }, headers: headers
+          expect(response).to have_http_status(:success)
+  
+          item.reload
+          expect(item.content).to eq(item_attributes[:content])
+          expect(item.completed).to eq(item_attributes[:completed])
+        end
       end
     end
 
-    context "deleting the item" do
+    describe "DELETE /tasks/:task_id/items/:id" do
       it "deletes the item successfully" do
         expect {
           delete task_item_path(task.id, item.id), headers: headers
