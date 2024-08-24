@@ -4,7 +4,7 @@ require "devise/jwt/test_helpers"
 RSpec.describe "User management", type: :request do
   let(:parsed_response) { JSON.parse(response.body, symbolize_names: true) }
 
-  describe "User registration and validation" do
+  describe "POST /users" do
     context "when creating a user with valid attributes" do
       let(:user_attributes) { attributes_for :user }
 
@@ -23,10 +23,8 @@ RSpec.describe "User management", type: :request do
     end
     
     context "when creating a user with invalid attributes" do
-      let(:user_attributes) { attributes_for :user, :empty_name, :empty_email, :empty_password }
-
       it "returns error for empty fields" do
-        post user_registration_path, params: { user: user_attributes }
+        post user_registration_path, params: { user: attributes_for(:user, :empty_name, :empty_email, :empty_password) }
         expect(response).to have_http_status(:unprocessable_entity)
         expect(parsed_response[:errors][:name]).to include("can't be blank")
         expect(parsed_response[:errors][:email]).to include("can't be blank")
@@ -42,21 +40,23 @@ RSpec.describe "User management", type: :request do
     end
   end
 
-  describe "When a user already exists" do
+  context "when a user already exists" do
     let!(:user) { create(:user) }
     let(:headers) { Devise::JWT::TestHelpers.auth_headers({}, user) }
     
-    context "updating a user with valid attributes" do
-      let(:updated_attributes) { attributes_for(:user).merge(current_password: user.password) }
-
-      it "updates the user successfully" do
-        put user_registration_path, params: { user: updated_attributes }, headers: headers
-        expect(response).to have_http_status(:success)
-
-        user.reload
-        expect(user.name).to eq(updated_attributes[:name])
-        expect(user.email).to eq(updated_attributes[:email])
-        expect(user.valid_password? updated_attributes[:password]).to be true
+    describe "PUT /users" do
+      context "with valid attributes" do
+        let(:updated_attributes) { attributes_for(:user).merge(current_password: user.password) }
+  
+        it "updates the user successfully" do
+          put user_registration_path, params: { user: updated_attributes }, headers: headers
+          expect(response).to have_http_status(:success)
+  
+          user.reload
+          expect(user.name).to eq(updated_attributes[:name])
+          expect(user.email).to eq(updated_attributes[:email])
+          expect(user.valid_password? updated_attributes[:password]).to be true
+        end
       end
     end
   end
