@@ -5,7 +5,7 @@ RSpec.describe "User management", type: :request do
   let(:parsed_response) { JSON.parse(response.body, symbolize_names: true) }
 
   describe "POST /users" do
-    context "when creating a user with valid attributes" do
+    context "with valid attributes" do
       let(:user_attributes) { attributes_for :user }
 
       it "creates the user successfully" do
@@ -22,7 +22,7 @@ RSpec.describe "User management", type: :request do
       end
     end
     
-    context "when creating a user with invalid attributes" do
+    context "with invalid attributes" do
       it "returns error for empty fields" do
         post user_registration_path, params: { user: attributes_for(:user, :empty_name, :empty_email, :empty_password) }
         expect(response).to have_http_status(:unprocessable_entity)
