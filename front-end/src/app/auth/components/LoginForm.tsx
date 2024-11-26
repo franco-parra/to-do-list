@@ -51,10 +51,6 @@ export function LoginForm() {
         body: JSON.stringify(userData),
       });
 
-      if (response.status === 0) {
-        throw new ServerNotRespondingError();
-      }
-
       if (!response.ok) {
         const data = await response.json();
 
@@ -71,26 +67,30 @@ export function LoginForm() {
       );
       push("/tasks");
     } catch (error: unknown) {
-      if (
+      let standardizedError:
+        | InvalidCredentials
+        | InternalServerError
+        | ServerNotRespondingError
+        | UnexpectedError
+        | null = null;
+
+      if (error instanceof TypeError) {
+        standardizedError = new ServerNotRespondingError();
+      } else if (
         error instanceof InvalidCredentials ||
-        error instanceof InternalServerError ||
-        error instanceof ServerNotRespondingError
+        error instanceof InternalServerError
       ) {
-        toast({
-          title: error.title,
-          description: error.message,
-          variant: "destructive",
-        });
+        standardizedError = error;
       } else {
         const typedError = error as Error;
-        const unexpectedError = new UnexpectedError(typedError.message);
-
-        toast({
-          title: unexpectedError.title,
-          description: unexpectedError.message,
-          variant: "destructive",
-        });
+        standardizedError = new UnexpectedError(typedError.message);
       }
+
+      toast({
+        title: standardizedError.title,
+        description: standardizedError.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
