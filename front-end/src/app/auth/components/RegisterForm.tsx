@@ -16,6 +16,9 @@ import { InternalServerError } from "../errors/InternalServerError";
 import { capitalizeFirstLetter } from "../utils/stringUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Type } from "lucide-react";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export function RegisterForm() {
   const { toast } = useToast();
@@ -28,6 +31,7 @@ export function RegisterForm() {
       password: "",
     },
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const onRegister = async (values: z.infer<typeof registerFormSchema>) => {
     const userData = {
@@ -37,6 +41,8 @@ export function RegisterForm() {
         password: values.password,
       },
     };
+
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost:3001/users", {
@@ -76,10 +82,11 @@ export function RegisterForm() {
             });
           }
         }
-
+      } else if (error instanceof TypeError) {
         toast({
-          title: "Algo salió mal",
-          description: error.message,
+          title: "Error de conexión",
+          description:
+            "No se pudo conectar al servidor. Por favor, inténtalo de nuevo más tarde.",
           variant: "destructive",
         });
       } else {
@@ -89,6 +96,8 @@ export function RegisterForm() {
           variant: "destructive",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,8 +147,14 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
-          Registrarse
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="animate-spin" /> Cargando
+            </>
+          ) : (
+            "Registrarse"
+          )}
         </Button>
       </form>
     </Form>
