@@ -13,10 +13,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginFormSchema } from "../schemas/loginFormSchema";
 import { InvalidCredentials } from "../errors/InvalidCredentials";
 import { InternalServerError } from "../errors/InternalServerError";
+import { ServerNotRespondingError } from "../errors/ServerNotRespondingError";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Server } from "lucide-react";
 import { useState } from "react";
+import { UnexpectedError } from "../errors/UnexpectedError";
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -49,6 +51,10 @@ export function LoginForm() {
         body: JSON.stringify(userData),
       });
 
+      if (response.status === 0) {
+        throw new ServerNotRespondingError();
+      }
+
       if (!response.ok) {
         const data = await response.json();
 
@@ -65,29 +71,23 @@ export function LoginForm() {
       );
       push("/tasks");
     } catch (error: unknown) {
-      if (error instanceof InvalidCredentials) {
+      if (
+        error instanceof InvalidCredentials ||
+        error instanceof InternalServerError ||
+        error instanceof ServerNotRespondingError
+      ) {
         toast({
-          title: "Error al tratar de iniciar sesión",
+          title: error.title,
           description: error.message,
-          variant: "destructive",
-        });
-      } else if (error instanceof InternalServerError) {
-        toast({
-          title: "Error al tratar de iniciar sesión",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else if (error instanceof TypeError) {
-        toast({
-          title: "Error de conexión",
-          description:
-            "No se pudo conectar al servidor. Por favor, inténtalo de nuevo más tarde.",
           variant: "destructive",
         });
       } else {
+        const typedError = error as Error;
+        const unexpectedError = new UnexpectedError(typedError.message);
+
         toast({
-          title: "Error inesperado",
-          description: `Desconocemos el origen, pero sí sus detalles: ${error}.`,
+          title: unexpectedError.title,
+          description: unexpectedError.message,
           variant: "destructive",
         });
       }
