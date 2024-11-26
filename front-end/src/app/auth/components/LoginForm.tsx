@@ -15,6 +15,8 @@ import { InvalidCredentials } from "../errors/InvalidCredentials";
 import { InternalServerError } from "../errors/InternalServerError";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -26,6 +28,7 @@ export function LoginForm() {
       password: "",
     },
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const onLogin = async (values: z.infer<typeof loginFormSchema>) => {
     const userData = {
@@ -34,6 +37,8 @@ export function LoginForm() {
         password: values.password,
       },
     };
+
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost:3001/users/sign_in", {
@@ -62,17 +67,32 @@ export function LoginForm() {
     } catch (error: unknown) {
       if (error instanceof InvalidCredentials) {
         toast({
-          title: "Algo salió mal",
+          title: "Error al tratar de iniciar sesión",
           description: error.message,
+          variant: "destructive",
+        });
+      } else if (error instanceof InternalServerError) {
+        toast({
+          title: "Error al tratar de iniciar sesión",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (error instanceof TypeError) {
+        toast({
+          title: "Error de conexión",
+          description:
+            "No se pudo conectar al servidor. Por favor, inténtalo de nuevo más tarde.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Algo salió mal",
-          description: "Desconocemos el error.",
+          title: "Error inesperado",
+          description: `Desconocemos el origen, pero sí sus detalles: ${error}.`,
           variant: "destructive",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -107,8 +127,14 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
-          Iniciar Sesión
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="animate-spin" /> Cargando
+            </>
+          ) : (
+            "Iniciar Sesión"
+          )}
         </Button>
       </form>
     </Form>
