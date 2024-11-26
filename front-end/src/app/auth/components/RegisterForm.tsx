@@ -16,9 +16,10 @@ import { InternalServerError } from "../errors/InternalServerError";
 import { capitalizeFirstLetter } from "../utils/stringUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { Type } from "lucide-react";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { ServerNotRespondingError } from "../errors/ServerNotRespondingError";
+import { UnexpectedError } from "../errors/UnexpectedError";
 
 export function RegisterForm() {
   const { toast } = useToast();
@@ -69,30 +70,33 @@ export function RegisterForm() {
       );
       push("/tasks");
     } catch (error: unknown) {
-      if (
-        error instanceof ValidationError ||
-        error instanceof InternalServerError
-      ) {
-        if (error instanceof ValidationError) {
-          for (const key in error.errors) {
-            registerForm.setError(key as "name" | "email" | "password", {
-              message: `${capitalizeFirstLetter(key)} ${error.errors[key].join(
-                ", "
-              )}`,
-            });
-          }
+      if (error instanceof ValidationError) {
+        for (const key in error.errors) {
+          registerForm.setError(key as "name" | "email" | "password", {
+            message: `${capitalizeFirstLetter(key)} ${error.errors[key].join(
+              ", "
+            )}`,
+          });
         }
-      } else if (error instanceof TypeError) {
-        toast({
-          title: "Error de conexión",
-          description:
-            "No se pudo conectar al servidor. Por favor, inténtalo de nuevo más tarde.",
-          variant: "destructive",
-        });
       } else {
+        let standardizedError:
+          | ServerNotRespondingError
+          | InternalServerError
+          | UnexpectedError
+          | null = null;
+
+        if (error instanceof TypeError) {
+          standardizedError = new ServerNotRespondingError();
+        } else if (error instanceof InternalServerError) {
+          standardizedError = error;
+        } else {
+          const typedError = error as Error;
+          standardizedError = new UnexpectedError(typedError.message);
+        }
+
         toast({
-          title: "Algo salió mal",
-          description: "Desconocemos el error.",
+          title: standardizedError.title,
+          description: standardizedError.message,
           variant: "destructive",
         });
       }
