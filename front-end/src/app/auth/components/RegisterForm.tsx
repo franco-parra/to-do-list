@@ -21,6 +21,13 @@ import { Loader2 } from "lucide-react";
 import { ServerNotRespondingError } from "../errors/ServerNotRespondingError";
 import { UnexpectedError } from "../errors/UnexpectedError";
 import { registerUser } from "../services/userService";
+import { FormFieldInput } from "./form/FormFieldInput";
+
+const formFields = [
+  { name: "name", type: "text", placeholder: "Nombre" },
+  { name: "email", type: "email", placeholder: "Correo electrónico" },
+  { name: "password", type: "password", placeholder: "Contraseña" },
+] as const;
 
 export function RegisterForm() {
   const { toast } = useToast();
@@ -35,6 +42,30 @@ export function RegisterForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleError = (error: unknown) => {
+    if (error instanceof ValidationError) {
+      Object.entries(error.errors).forEach(([key, messages]) => {
+        registerForm.setError(key as "name" | "email" | "password", {
+          message: `${capitalizeFirstLetter(key)} ${messages.join(", ")}`,
+        });
+      });
+      return;
+    }
+
+    const standardizedError =
+      error instanceof TypeError
+        ? new ServerNotRespondingError()
+        : error instanceof InternalServerError
+        ? error
+        : new UnexpectedError((error as Error).message);
+
+    toast({
+      title: standardizedError.title,
+      description: standardizedError.message,
+      variant: "destructive",
+    });
+  };
+
   const onRegister = async (values: z.infer<typeof registerFormSchema>) => {
     setIsLoading(true);
 
@@ -47,36 +78,7 @@ export function RegisterForm() {
       localStorage.setItem("jwt", jwt);
       push("/tasks");
     } catch (error: unknown) {
-      if (error instanceof ValidationError) {
-        for (const key in error.errors) {
-          registerForm.setError(key as "name" | "email" | "password", {
-            message: `${capitalizeFirstLetter(key)} ${error.errors[key].join(
-              ", "
-            )}`,
-          });
-        }
-      } else {
-        let standardizedError:
-          | ServerNotRespondingError
-          | InternalServerError
-          | UnexpectedError
-          | null = null;
-
-        if (error instanceof TypeError) {
-          standardizedError = new ServerNotRespondingError();
-        } else if (error instanceof InternalServerError) {
-          standardizedError = error;
-        } else {
-          const typedError = error as Error;
-          standardizedError = new UnexpectedError(typedError.message);
-        }
-
-        toast({
-          title: standardizedError.title,
-          description: standardizedError.message,
-          variant: "destructive",
-        });
-      }
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -88,46 +90,15 @@ export function RegisterForm() {
         className="space-y-4"
         onSubmit={registerForm.handleSubmit(onRegister)}
       >
-        <FormField
-          control={registerForm.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input type="text" placeholder="Nombre" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={registerForm.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="Correo electrónico"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={registerForm.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input type="password" placeholder="Contraseña" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {formFields.map((field) => (
+          <FormFieldInput
+            key={field.name}
+            control={registerForm.control}
+            name={field.name}
+            type={field.type}
+            placeholder={field.placeholder}
+          />
+        ))}
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>

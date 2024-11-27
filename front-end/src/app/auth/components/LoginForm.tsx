@@ -20,6 +20,12 @@ import { Loader2, Server } from "lucide-react";
 import { useState } from "react";
 import { UnexpectedError } from "../errors/UnexpectedError";
 import { loginUser } from "../services/userService";
+import { FormFieldInput } from "./form/FormFieldInput";
+
+const formFields = [
+  { name: "email", type: "email", placeholder: "Correo electrónico" },
+  { name: "password", type: "password", placeholder: "Contraseña" },
+] as const;
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -33,6 +39,22 @@ export function LoginForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleError = (error: unknown) => {
+    const standardizedError =
+      error instanceof TypeError
+        ? new ServerNotRespondingError()
+        : error instanceof InvalidCredentials ||
+          error instanceof InternalServerError
+        ? error
+        : new UnexpectedError((error as Error).message);
+
+    toast({
+      title: standardizedError.title,
+      description: standardizedError.message,
+      variant: "destructive",
+    });
+  };
+
   const onLogin = async (values: z.infer<typeof loginFormSchema>) => {
     setIsLoading(true);
 
@@ -44,30 +66,7 @@ export function LoginForm() {
       localStorage.setItem("jwt", jwt);
       push("/tasks");
     } catch (error: unknown) {
-      let standardizedError:
-        | InvalidCredentials
-        | InternalServerError
-        | ServerNotRespondingError
-        | UnexpectedError
-        | null = null;
-
-      if (error instanceof TypeError) {
-        standardizedError = new ServerNotRespondingError();
-      } else if (
-        error instanceof InvalidCredentials ||
-        error instanceof InternalServerError
-      ) {
-        standardizedError = error;
-      } else {
-        const typedError = error as Error;
-        standardizedError = new UnexpectedError(typedError.message);
-      }
-
-      toast({
-        title: standardizedError.title,
-        description: standardizedError.message,
-        variant: "destructive",
-      });
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -76,34 +75,15 @@ export function LoginForm() {
   return (
     <Form {...loginForm}>
       <form className="space-y-4" onSubmit={loginForm.handleSubmit(onLogin)}>
-        <FormField
-          control={loginForm.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="Correo electrónico"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={loginForm.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input type="password" placeholder="Contraseña" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {formFields.map((field) => (
+          <FormFieldInput
+            key={field.name}
+            control={loginForm.control}
+            name={field.name}
+            type={field.type}
+            placeholder={field.placeholder}
+          />
+        ))}
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
