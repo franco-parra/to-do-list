@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Server } from "lucide-react";
 import { useState } from "react";
 import { UnexpectedError } from "../errors/UnexpectedError";
+import { loginUser } from "../services/userService";
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -33,38 +34,14 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const onLogin = async (values: z.infer<typeof loginFormSchema>) => {
-    const userData = {
-      user: {
-        email: values.email,
-        password: values.password,
-      },
-    };
-
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/users/sign_in", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
+      const jwt = await loginUser({
+        email: values.email,
+        password: values.password,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-
-        if ("errors" in data) {
-          throw new InvalidCredentials();
-        } else {
-          throw new InternalServerError();
-        }
-      }
-
-      localStorage.setItem(
-        "jwt",
-        response.headers.get("authorization")?.split("Bearer ")[1] || ""
-      );
+      localStorage.setItem("jwt", jwt);
       push("/tasks");
     } catch (error: unknown) {
       let standardizedError:

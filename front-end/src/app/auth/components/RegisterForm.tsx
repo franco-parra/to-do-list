@@ -20,6 +20,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { ServerNotRespondingError } from "../errors/ServerNotRespondingError";
 import { UnexpectedError } from "../errors/UnexpectedError";
+import { registerUser } from "../services/userService";
 
 export function RegisterForm() {
   const { toast } = useToast();
@@ -35,39 +36,15 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const onRegister = async (values: z.infer<typeof registerFormSchema>) => {
-    const userData = {
-      user: {
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      },
-    };
-
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
+      const jwt = await registerUser({
+        name: values.name,
+        email: values.email,
+        password: values.password,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-
-        if ("errors" in data) {
-          throw new ValidationError(data["errors"]);
-        } else {
-          throw new InternalServerError();
-        }
-      }
-
-      localStorage.setItem(
-        "jwt",
-        response.headers.get("authorization")?.split("Bearer ")[1] || ""
-      );
+      localStorage.setItem("jwt", jwt);
       push("/tasks");
     } catch (error: unknown) {
       if (error instanceof ValidationError) {
