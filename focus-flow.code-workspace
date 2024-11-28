@@ -1,0 +1,10 @@
+{
+  "folders": [
+    { "name": "Root", "path": "." },
+    { "name": "Back end", "path": "back_end" },
+    { "name": "Front end", "path": "front_end" }
+  ],
+  "extensions": {
+    "recommendations": ["esbenp.prettier-vscode", "Shopify.ruby-lsp"]
+  }
+}
