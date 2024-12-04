@@ -13,7 +13,7 @@ export const registerUser = async ({
   password: string;
 }) => {
   const userData = { user: { name, email, password } };
-  const response = await fetch("http://localhost:3001/users", {
+  const response = await fetch("http://localhost:3001/users?locale=es", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
