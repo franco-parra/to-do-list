@@ -168,6 +168,7 @@ GEM
     parser (3.3.4.2)
       ast (~> 2.4.1)
       racc
+    prism (1.2.0)
     psych (5.1.2)
       stringio
     puma (6.4.2)
@@ -214,6 +215,8 @@ GEM
       zeitwerk (~> 2.6)
     rainbow (3.1.1)
     rake (13.2.1)
+    rbs (3.6.1)
+      logger
     rdoc (6.7.0)
       psych (>= 4.0.0)
     regexp_parser (2.9.2)
@@ -270,8 +273,14 @@ GEM
       rubocop-minitest
       rubocop-performance
       rubocop-rails
+    ruby-lsp (0.22.1)
+      language_server-protocol (~> 3.17.0)
+      prism (>= 1.2, < 2.0)
+      rbs (>= 3, < 4)
+      sorbet-runtime (>= 0.5.10782)
     ruby-progressbar (1.13.0)
     securerandom (0.3.1)
+    sorbet-runtime (0.5.11670)
     sqlite3 (2.0.4-aarch64-linux-gnu)
     sqlite3 (2.0.4-aarch64-linux-musl)
     sqlite3 (2.0.4-arm-linux-gnu)
@@ -334,6 +343,7 @@ DEPENDENCIES
   rails (~> 7.2.0)
   rspec-rails
   rubocop-rails-omakase
+  ruby-lsp (~> 0.22.1)
   sqlite3 (>= 1.4)
   timecop
   tzinfo-data
