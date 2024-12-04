@@ -46,7 +46,9 @@ export function RegisterForm() {
     if (error instanceof ValidationError) {
       Object.entries(error.errors).forEach(([key, messages]) => {
         registerForm.setError(key as "name" | "email" | "password", {
-          message: `${capitalizeFirstLetter(key)} ${messages.join(", ")}`,
+          message: `${messages
+            .map((message) => capitalizeFirstLetter(message))
+            .join(". ")}`,
         });
       });
       return;
