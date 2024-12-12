@@ -21,6 +21,7 @@ import { useState } from "react";
 import { UnexpectedError } from "../errors/UnexpectedError";
 import { loginUser } from "../services/userService";
 import { FormFieldInput } from "./form/FormFieldInput";
+import Cookies from "js-cookie";
 
 const formFields = [
   { name: "email", type: "email", placeholder: "Correo electrónico" },
@@ -63,7 +64,7 @@ export function LoginForm() {
         email: values.email,
         password: values.password,
       });
-      localStorage.setItem("jwt", jwt);
+      Cookies.set("jwt", jwt, { expires: 1 });
       push("/tasks");
     } catch (error: unknown) {
       handleError(error);

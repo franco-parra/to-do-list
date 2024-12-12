@@ -22,6 +22,7 @@ import { ServerNotRespondingError } from "../errors/ServerNotRespondingError";
 import { UnexpectedError } from "../errors/UnexpectedError";
 import { registerUser } from "../services/userService";
 import { FormFieldInput } from "./form/FormFieldInput";
+import Cookies from "js-cookie";
 
 const formFields = [
   { name: "name", type: "text", placeholder: "Nombre" },
@@ -77,7 +78,7 @@ export function RegisterForm() {
         email: values.email,
         password: values.password,
       });
-      localStorage.setItem("jwt", jwt);
+      Cookies.set("jwt", jwt, { expires: 1 });
       push("/tasks");
     } catch (error: unknown) {
       handleError(error);
