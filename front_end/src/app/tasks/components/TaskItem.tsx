@@ -103,6 +103,7 @@ export default function TaskItem({
           value={editedTask.title}
           onChange={(e) => updateTitle(e.target.value)}
           className="text-lg font-semibold"
+          placeholder="Nueva tarea"
         />
       </CardHeader>
       <CardContent className="flex-grow">

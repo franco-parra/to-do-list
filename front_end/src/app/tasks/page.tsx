@@ -37,7 +37,7 @@ export default function TaskList() {
   const addTask = () => {
     const newTask = {
       id: Date.now(),
-      title: "Nueva Tarea",
+      title: "",
       items: [],
       isNewTask: true,
     };
