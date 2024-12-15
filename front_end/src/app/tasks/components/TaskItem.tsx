@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Trash2, Plus, Save } from "lucide-react";
+import { Trash2, Plus, Save, RotateCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface TaskItemProps {
@@ -31,9 +31,13 @@ export default function TaskItem({
   onDelete,
   isNewTask = false,
 }: TaskItemProps) {
-  const [isEditing, setIsEditing] = useState(isNewTask);
   const [editedTask, setEditedTask] = useState(task);
+  const [lastSavedTask, setLastSavedTask] = useState(task);
   const [newItemText, setNewItemText] = useState("");
+
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(editedTask) !== JSON.stringify(lastSavedTask);
+  }, [editedTask, lastSavedTask]);
 
   const updateTitle = (newTitle: string) => {
     setEditedTask({ ...editedTask, title: newTitle });
@@ -79,7 +83,11 @@ export default function TaskItem({
 
   const saveChanges = () => {
     onUpdate({ ...editedTask, isNewTask: false });
-    setIsEditing(false);
+    setLastSavedTask(editedTask);
+  };
+
+  const restoreLastSaved = () => {
+    setEditedTask(lastSavedTask);
   };
 
   const completedItems = editedTask.items.filter(
@@ -91,99 +99,79 @@ export default function TaskItem({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        {isEditing ? (
-          <Input
-            value={editedTask.title}
-            onChange={(e) => updateTitle(e.target.value)}
-            className="text-lg font-semibold"
-          />
-        ) : (
-          <CardTitle className="text-lg">{editedTask.title}</CardTitle>
-        )}
+        <Input
+          value={editedTask.title}
+          onChange={(e) => updateTitle(e.target.value)}
+          className="text-lg font-semibold"
+        />
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
           <div
-            className="bg-blue-600 h-2.5 rounded-full"
+            className="bg-black h-2.5 rounded-full"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
-        {isEditing ? (
-          <div className="space-y-2">
-            {editedTask.items.map((item) => (
-              <div key={item.id} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={item.completed}
-                  onCheckedChange={() => toggleItem(item.id)}
-                />
-                <Input
-                  value={item.text}
-                  onChange={(e) => updateItem(item.id, e.target.value)}
-                  className="flex-grow"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteItem(item.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <div className="flex space-x-2 mt-2">
-              <Input
-                value={newItemText}
-                onChange={(e) => setNewItemText(e.target.value)}
-                placeholder="Nuevo ítem"
-                className="flex-grow"
+        <div className="space-y-2">
+          {editedTask.items.map((item) => (
+            <div key={item.id} className="flex items-center space-x-2">
+              <Checkbox
+                checked={item.completed}
+                onCheckedChange={() => toggleItem(item.id)}
               />
-              <Button onClick={addItem}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <ul className="space-y-1">
-            {editedTask.items.map((item) => (
-              <li
-                key={item.id}
-                className={`flex items-center space-x-2 ${
+              <Input
+                value={item.text}
+                onChange={(e) => updateItem(item.id, e.target.value)}
+                className={`flex-grow ${
                   item.completed ? "line-through text-gray-500" : ""
                 }`}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => deleteItem(item.id)}
               >
-                <Checkbox
-                  checked={item.completed}
-                  onCheckedChange={() => toggleItem(item.id)}
-                />
-                <span>{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex space-x-2 mt-2">
+            <Input
+              value={newItemText}
+              onChange={(e) => setNewItemText(e.target.value)}
+              placeholder="Nuevo ítem"
+              className="flex-grow"
+            />
+            <Button onClick={addItem}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </CardContent>
       <CardFooter className="justify-between">
-        {!isNewTask && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? "Cancelar" : "Editar"}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={restoreLastSaved}
+          disabled={!hasChanges}
+        >
+          <RotateCcw className="h-4 w-4" />
+          Restaurar
+        </Button>
+        <div className="space-x-2">
+          <Button size="sm" onClick={saveChanges} disabled={!hasChanges}>
+            <Save className="h-4 w-4" />
+            Guardar
           </Button>
-        )}
-        {isEditing ? (
-          <Button size="sm" onClick={saveChanges}>
-            <Save className="mr-2 h-4 w-4" /> Guardar
-          </Button>
-        ) : (
           <Button
             variant="destructive"
             size="sm"
             onClick={() => onDelete(task.id)}
           >
-            <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+            <Trash2 className="h-4 w-4" />
+            Eliminar
           </Button>
-        )}
+        </div>
       </CardFooter>
     </Card>
   );
