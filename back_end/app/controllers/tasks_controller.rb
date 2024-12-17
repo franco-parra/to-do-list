@@ -5,7 +5,7 @@ class TasksController < ApplicationController
   before_action :set_task, only: [:show, :update, :destroy]
   
   def index
-    authorize! :read, @task
+    authorize! :read, Task
     render json: success_response(message: "Resources retrieved successfully", data: { tasks: current_user.tasks }), status: :ok
   end
 
