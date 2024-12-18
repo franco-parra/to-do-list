@@ -2,11 +2,11 @@ class TasksController < ApplicationController
   include AuthenticationConcern
   include ResponseHandlerConcern
 
-  before_action :set_task, only: [:show, :update, :destroy]
-  
+  before_action :set_task, only: [ :show, :update, :destroy ]
+
   def index
     authorize! :read, Task
-    render json: success_response(message: "Resources retrieved successfully", data: { tasks: current_user.tasks }), status: :ok
+    render json: success_response(message: "Resources retrieved successfully", data: { tasks: current_user.tasks.includes(:items).as_json(include: :items) }), status: :ok
   end
 
   def show
@@ -37,7 +37,7 @@ class TasksController < ApplicationController
 
   def destroy
     authorize! :destroy, @task
-    
+
     begin
       @task.destroy!
       render json: success_response(message: "Resource deleted successfully", data: nil), status: :ok
@@ -47,7 +47,7 @@ class TasksController < ApplicationController
   end
 
   private
-  
+
   def task_params
     params.require(:task).permit(:title, :description, :due_date)
   end
