@@ -5,56 +5,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import TaskItem from "./components/TaskItem";
-
-type KeyTransformer<T> = T extends object
-  ? T extends Array<infer U>
-    ? Array<KeyTransformer<U>>
-    : {
-        [K in keyof T as K extends string ? FormatKey<K> : K]: KeyTransformer<
-          T[K]
-        >;
-      }
-  : T;
-
-type FormatKey<S extends string> = S extends `${infer T}_${infer U}`
-  ? `${T}${Capitalize<FormatKey<U>>}`
-  : S;
-
-function transformKeys<T>(objectOrArray: T): KeyTransformer<T> {
-  if (typeof objectOrArray !== "object" || objectOrArray === null)
-    return objectOrArray as KeyTransformer<T>;
-
-  if (Array.isArray(objectOrArray)) {
-    return objectOrArray.map(transformKeys) as KeyTransformer<T>;
-  }
-
-  let transformedObject: any = {};
-
-  for (const key in objectOrArray) {
-    const formattedKey = formatKeyToCamel(key);
-    transformedObject[formattedKey] = transformKeys(objectOrArray[key]);
-  }
-  return transformedObject;
-}
-
-function formatKeyToCamel(str: string) {
-  return str.replace(/([-_][a-z])/g, (group) =>
-    group.toUpperCase().replace("-", "").replace("_", "")
-  );
-}
+import { transformKeys } from "@/utils/transformKeys";
+import { Task, ApiResponse, TaskApiData } from "@/types/task.types";
 
 export default function TaskList() {
-  const [tasks, setTasks] = useState<
-    Array<{
-      id: number;
-      title: string;
-      items: Array<{
-        completed: boolean;
-        content: string;
-        id: number;
-      }>;
-    }>
-  >([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -63,29 +18,7 @@ export default function TaskList() {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data: {
-        message: string;
-        status: "success" | "error";
-        data: null | {
-          tasks: Array<{
-            createdAt: string;
-            description: string;
-            dueDate: string;
-            id: number;
-            title: string;
-            updatedAt: string;
-            userId: number;
-            items: Array<{
-              completed: boolean;
-              content: string;
-              createdAt: string;
-              id: number;
-              taskId: number;
-              updatedAt: string;
-            }>;
-          }>;
-        };
-      } = await response.json();
+      const data: ApiResponse<TaskApiData> = await response.json();
       setTasks(
         transformKeys(data.data?.tasks || []).map(({ id, title, items }) => ({
           id,
@@ -102,7 +35,7 @@ export default function TaskList() {
   }, []);
 
   const addTask = () => {
-    const newTask = {
+    const newTask: Task = {
       id: Date.now(),
       title: "",
       items: [],
@@ -110,11 +43,7 @@ export default function TaskList() {
     setTasks([...tasks, newTask]);
   };
 
-  const updateTask = (updatedTask: {
-    id: number;
-    title: string;
-    items: Array<{ id: number; content: string; completed: boolean }>;
-  }) => {
+  const updateTask = (updatedTask: Task) => {
     setTasks(
       tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
     );
