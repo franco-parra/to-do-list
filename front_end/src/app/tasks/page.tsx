@@ -1,45 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import Cookies from "js-cookie";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import TaskItem from "./components/TaskItem";
 
-// Datos de ejemplo
-const initialTasks: Array<{
-  id: number;
-  title: string;
-  items: Array<{ id: number; text: string; completed: boolean }>;
-  isNewTask?: boolean;
-}> = [
-  {
-    id: 1,
-    title: "Proyecto A",
-    items: [
-      { id: 1, text: "Tarea 1", completed: true },
-      { id: 2, text: "Tarea 2", completed: false },
-      { id: 3, text: "Tarea 3", completed: true },
-    ],
-  },
-  {
-    id: 2,
-    title: "Proyecto B",
-    items: [
-      { id: 1, text: "Tarea 1", completed: false },
-      { id: 2, text: "Tarea 2", completed: false },
-    ],
-  },
-];
+type KeyTransformer<T> = T extends object
+  ? T extends Array<infer U>
+    ? Array<KeyTransformer<U>>
+    : {
+        [K in keyof T as K extends string ? FormatKey<K> : K]: KeyTransformer<
+          T[K]
+        >;
+      }
+  : T;
+
+type FormatKey<S extends string> = S extends `${infer T}_${infer U}`
+  ? `${T}${Capitalize<FormatKey<U>>}`
+  : S;
+
+function transformKeys<T>(objectOrArray: T): KeyTransformer<T> {
+  if (typeof objectOrArray !== "object" || objectOrArray === null)
+    return objectOrArray as KeyTransformer<T>;
+
+  if (Array.isArray(objectOrArray)) {
+    return objectOrArray.map(transformKeys) as KeyTransformer<T>;
+  }
+
+  let transformedObject: any = {};
+
+  for (const key in objectOrArray) {
+    const formattedKey = formatKeyToCamel(key);
+    transformedObject[formattedKey] = transformKeys(objectOrArray[key]);
+  }
+  return transformedObject;
+}
+
+function formatKeyToCamel(str: string) {
+  return str.replace(/([-_][a-z])/g, (group) =>
+    group.toUpperCase().replace("-", "").replace("_", "")
+  );
+}
 
 export default function TaskList() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<
+    Array<{
+      id: number;
+      title: string;
+      items: Array<{
+        completed: boolean;
+        content: string;
+        id: number;
+      }>;
+    }>
+  >([]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const token = Cookies.get("jwt");
+      const response = await fetch("http://localhost:3001/tasks", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: {
+        message: string;
+        status: "success" | "error";
+        data: null | {
+          tasks: Array<{
+            createdAt: string;
+            description: string;
+            dueDate: string;
+            id: number;
+            title: string;
+            updatedAt: string;
+            userId: number;
+            items: Array<{
+              completed: boolean;
+              content: string;
+              createdAt: string;
+              id: number;
+              taskId: number;
+              updatedAt: string;
+            }>;
+          }>;
+        };
+      } = await response.json();
+      setTasks(
+        transformKeys(data.data?.tasks || []).map(({ id, title, items }) => ({
+          id,
+          title,
+          items: items.map(({ id, content, completed }) => ({
+            id,
+            content,
+            completed,
+          })),
+        }))
+      );
+    };
+    fetchTasks();
+  }, []);
 
   const addTask = () => {
     const newTask = {
       id: Date.now(),
       title: "",
       items: [],
-      isNewTask: true,
     };
     setTasks([...tasks, newTask]);
   };
@@ -47,8 +113,7 @@ export default function TaskList() {
   const updateTask = (updatedTask: {
     id: number;
     title: string;
-    items: Array<{ id: number; text: string; completed: boolean }>;
-    isNewTask?: boolean;
+    items: Array<{ id: number; content: string; completed: boolean }>;
   }) => {
     setTasks(
       tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
@@ -69,7 +134,6 @@ export default function TaskList() {
             task={task}
             onUpdate={updateTask}
             onDelete={deleteTask}
-            isNewTask={task.isNewTask}
           />
         ))}
       </div>

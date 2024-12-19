@@ -17,23 +17,16 @@ interface TaskItemProps {
   task: {
     id: number;
     title: string;
-    items: Array<{ id: number; text: string; completed: boolean }>;
-    isNewTask?: boolean;
+    items: Array<{ id: number; content: string; completed: boolean }>;
   };
   onUpdate: (task: TaskItemProps["task"]) => void;
   onDelete: (taskId: number) => void;
-  isNewTask?: boolean;
 }
 
-export default function TaskItem({
-  task,
-  onUpdate,
-  onDelete,
-  isNewTask = false,
-}: TaskItemProps) {
+export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   const [editedTask, setEditedTask] = useState(task);
   const [lastSavedTask, setLastSavedTask] = useState(task);
-  const [newItemText, setNewItemText] = useState("");
+  const [newItemContent, setNewItemContent] = useState("");
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(editedTask) !== JSON.stringify(lastSavedTask);
@@ -69,20 +62,20 @@ export default function TaskItem({
   };
 
   const addItem = () => {
-    if (newItemText.trim()) {
+    if (newItemContent.trim()) {
       setEditedTask({
         ...editedTask,
         items: [
           ...editedTask.items,
-          { id: Date.now(), text: newItemText, completed: false },
+          { id: Date.now(), content: newItemContent, completed: false },
         ],
       });
-      setNewItemText("");
+      setNewItemContent("");
     }
   };
 
   const saveChanges = () => {
-    onUpdate({ ...editedTask, isNewTask: false });
+    onUpdate({ ...editedTask });
     setLastSavedTask(editedTask);
   };
 
@@ -121,7 +114,7 @@ export default function TaskItem({
                 onCheckedChange={() => toggleItem(item.id)}
               />
               <Input
-                value={item.text}
+                value={item.content}
                 onChange={(e) => updateItem(item.id, e.target.value)}
                 className={`flex-grow ${
                   item.completed ? "line-through text-gray-500" : ""
@@ -138,8 +131,8 @@ export default function TaskItem({
           ))}
           <div className="flex space-x-2 mt-2">
             <Input
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
+              value={newItemContent}
+              onChange={(e) => setNewItemContent(e.target.value)}
               placeholder="Nuevo ítem"
               className="flex-grow"
             />
