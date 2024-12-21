@@ -1,13 +1,10 @@
 "use client";
 
-import Cookies from "js-cookie";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import TaskItem from "./components/TaskItem";
-import { transformKeys } from "@/utils/transformKeys";
-import { Task, ApiResponse, TaskApiData } from "@/types/task.types";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks } from "@/app/tasks/hooks/useTasks";
 
 export default function TaskList() {
   const {

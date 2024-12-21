@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
-import { ApiResponse, TaskApiData, Task } from "@/types/task.types";
-import { transformKeys } from "@/utils/transformKeys";
+import { ApiResponse, TaskApiData, Task } from "@/app/tasks/types/task.types";
+import { transformKeys } from "@/app/tasks/utils/transformKeys";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
