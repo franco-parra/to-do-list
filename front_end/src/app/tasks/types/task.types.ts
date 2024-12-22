@@ -35,3 +35,8 @@ export interface TaskApiData {
     }>;
   }>;
 }
+export interface TaskItemProps {
+  task: Task;
+  onUpdate: (task: Task) => void;
+  onDelete: (taskId: number) => void;
+}
