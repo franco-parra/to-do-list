@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Task } from "../types/task.types";
+import { Task } from "../types/task";
 
 export function useTaskManager(task: Task, onUpdate: (task: Task) => void) {
   const [editedTask, setEditedTask] = useState(task);

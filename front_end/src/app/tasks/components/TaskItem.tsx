@@ -11,9 +11,17 @@ import {
 import { Trash2, Plus, Save, RotateCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTaskManager } from "../hooks/useTaskManager";
-import { TaskItemProps } from "../types/task.types";
+import { Task } from "../types/task";
 
-export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
+export default function TaskItem({
+  task,
+  onUpdate,
+  onDelete,
+}: {
+  task: Task;
+  onUpdate: (task: Task) => void;
+  onDelete: (taskId: number) => void;
+}) {
   const taskManager = useTaskManager(task, onUpdate);
 
   return (

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Task } from "@/app/tasks/types/task.types";
+import { Task } from "../types/task";
 import { taskService } from "@/app/tasks/services/taskService";
 
 export function useTasks() {

@@ -1,15 +1,3 @@
-export interface TaskItem {
-  id: number;
-  content: string;
-  completed: boolean;
-}
-
-export interface Task {
-  id: number;
-  title: string;
-  items: TaskItem[];
-}
-
 export interface ApiResponse<T> {
   message: string;
   status: "success" | "error";
@@ -34,9 +22,4 @@ export interface TaskApiData {
       updatedAt: string;
     }>;
   }>;
-}
-export interface TaskItemProps {
-  task: Task;
-  onUpdate: (task: Task) => void;
-  onDelete: (taskId: number) => void;
 }
