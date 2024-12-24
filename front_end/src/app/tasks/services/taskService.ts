@@ -2,6 +2,8 @@ import Cookies from "js-cookie";
 import { ApiResponse, TaskApiData } from "../types/api";
 import { Task } from "../types/task";
 import { transformKeys } from "@/app/tasks/utils/transformKeys";
+import { ResourceDeletionError } from "../errors/ResourceDeletionError";
+import { InternalServerError } from "@/app/auth/errors/InternalServerError";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -31,6 +33,15 @@ export const taskService = {
       headers: { Authorization: `Bearer ${token}` },
       method: "delete",
     });
-    const data: ApiResponse<TaskApiData> = await response.json();
+
+    if (!response.ok) {
+      const data: ApiResponse<null> = await response.json();
+
+      if ("errors" in data) {
+        throw new ResourceDeletionError();
+      } else {
+        throw new InternalServerError();
+      }
+    }
   },
 };

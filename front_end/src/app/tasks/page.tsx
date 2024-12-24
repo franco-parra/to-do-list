@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import TaskItem from "./components/TaskItem";
 import { useTasks } from "@/app/tasks/hooks/useTasks";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TaskList() {
   const {
@@ -16,10 +17,21 @@ export default function TaskList() {
     updateTask,
     deleteTask,
   } = useTasks();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: error.title,
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [error]);
 
   return (
     <div className="p-4">

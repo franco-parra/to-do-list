@@ -1,11 +1,21 @@
 import { useState, useCallback } from "react";
 import { Task } from "../types/task";
 import { taskService } from "@/app/tasks/services/taskService";
+import { ServerNotRespondingError } from "@/app/auth/errors/ServerNotRespondingError";
+import { InternalServerError } from "@/app/auth/errors/InternalServerError";
+import { UnexpectedError } from "@/app/auth/errors/UnexpectedError";
+import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<
+    | ServerNotRespondingError
+    | ResourceDeletionError
+    | InternalServerError
+    | UnexpectedError
+    | null
+  >(null);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -41,7 +51,14 @@ export function useTasks() {
         oldTasks.filter((oldTask) => oldTask.id !== taskId)
       );
     } catch (error: unknown) {
-      console.log("error:", error);
+      const standardizedError =
+        error instanceof TypeError
+          ? new ServerNotRespondingError()
+          : error instanceof ResourceDeletionError ||
+            error instanceof InternalServerError
+          ? error
+          : new UnexpectedError((error as Error).message);
+      setError(standardizedError);
     }
   }, []);
 

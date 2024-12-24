@@ -2,6 +2,7 @@ export interface ApiResponse<T> {
   message: string;
   status: "success" | "error";
   data: T | null;
+  errors?: null | { [key: string]: string };
 }
 
 export interface TaskApiData {
