@@ -60,14 +60,15 @@ export function useTasks() {
         oldTasks.filter((oldTask) => oldTask.id !== taskId)
       );
     } catch (error: unknown) {
-      const standardizedError =
-        error instanceof TypeError
-          ? new ServerNotRespondingError()
-          : error instanceof ResourceDeletionError ||
-            error instanceof InternalServerError
-          ? error
-          : new UnexpectedError((error as Error).message);
-      setError(standardizedError);
+      if (
+        error instanceof ServerNotRespondingError ||
+        error instanceof ResourceDeletionError ||
+        error instanceof InternalServerError
+      ) {
+        setError(error);
+      } else if (error instanceof Error) {
+        setError(new UnexpectedError(error.message));
+      }
     }
   }, []);
 

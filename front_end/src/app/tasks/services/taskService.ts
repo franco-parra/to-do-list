@@ -48,18 +48,27 @@ export const taskService = {
   },
   async deleteTask(taskId: number): Promise<void> {
     const token = Cookies.get("jwt");
-    const response = await fetch(`${API_URL}/tasks/${taskId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      method: "delete",
-    });
 
-    if (!response.ok) {
-      const data: ApiResponse<null> = await response.json();
+    try {
+      const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        method: "delete",
+      });
 
-      if ("errors" in data) {
-        throw new ResourceDeletionError();
+      if (!response.ok) {
+        const data: ApiResponse<null> = await response.json();
+
+        if ("errors" in data) {
+          throw new ResourceDeletionError();
+        } else {
+          throw new InternalServerError();
+        }
+      }
+    } catch (error: unknown) {
+      if (error instanceof TypeError) {
+        throw new ServerNotRespondingError();
       } else {
-        throw new InternalServerError();
+        throw error;
       }
     }
   },
