@@ -5,6 +5,7 @@ import { ServerNotRespondingError } from "@/app/auth/errors/ServerNotRespondingE
 import { InternalServerError } from "@/app/auth/errors/InternalServerError";
 import { UnexpectedError } from "@/app/auth/errors/UnexpectedError";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
+import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -22,8 +23,15 @@ export function useTasks() {
       setIsLoading(true);
       const data = await taskService.fetchTasks();
       setTasks(data);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Error fetching tasks"));
+    } catch (error: unknown) {
+      const standardizedError =
+        error instanceof TypeError
+          ? new ServerNotRespondingError()
+          : error instanceof ResourceRetrievalError ||
+            error instanceof InternalServerError
+          ? error
+          : new UnexpectedError((error as Error).message);
+      setError(standardizedError);
     } finally {
       setIsLoading(false);
     }

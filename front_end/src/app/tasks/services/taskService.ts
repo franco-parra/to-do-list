@@ -4,6 +4,7 @@ import { Task } from "../types/task";
 import { transformKeys } from "@/app/tasks/utils/transformKeys";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 import { InternalServerError } from "@/app/auth/errors/InternalServerError";
+import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -14,6 +15,14 @@ export const taskService = {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data: ApiResponse<TaskApiData> = await response.json();
+
+    if (!response.ok) {
+      if ("errors" in data) {
+        throw new ResourceRetrievalError();
+      } else {
+        throw new InternalServerError();
+      }
+    }
 
     return transformKeys(data.data?.tasks || []).map(
       ({ id, title, items }) => ({
