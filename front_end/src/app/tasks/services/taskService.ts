@@ -25,4 +25,12 @@ export const taskService = {
       })
     );
   },
+  async deleteTask(taskId: number): Promise<void> {
+    const token = Cookies.get("jwt");
+    const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "delete",
+    });
+    const data: ApiResponse<TaskApiData> = await response.json();
+  },
 };

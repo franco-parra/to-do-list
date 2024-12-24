@@ -34,8 +34,15 @@ export function useTasks() {
     );
   }, []);
 
-  const deleteTask = useCallback((taskId: number) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
+  const deleteTask = useCallback(async (taskId: number) => {
+    try {
+      await taskService.deleteTask(taskId);
+      setTasks((oldTasks) =>
+        oldTasks.filter((oldTask) => oldTask.id !== taskId)
+      );
+    } catch (error: unknown) {
+      console.log("error:", error);
+    }
   }, []);
 
   return {
