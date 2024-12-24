@@ -5,36 +5,46 @@ import { transformKeys } from "@/app/tasks/utils/transformKeys";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 import { InternalServerError } from "@/app/auth/errors/InternalServerError";
 import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
+import { ServerNotRespondingError } from "@/app/auth/errors/ServerNotRespondingError";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const taskService = {
   async fetchTasks(): Promise<Task[]> {
     const token = Cookies.get("jwt");
-    const response = await fetch(`${API_URL}/tasks`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data: ApiResponse<TaskApiData> = await response.json();
 
-    if (!response.ok) {
-      if ("errors" in data) {
-        throw new ResourceRetrievalError();
+    try {
+      const response = await fetch(`${API_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: ApiResponse<TaskApiData> = await response.json();
+
+      if (!response.ok) {
+        if ("errors" in data) {
+          throw new ResourceRetrievalError();
+        } else {
+          throw new InternalServerError();
+        }
+      }
+
+      return transformKeys(data.data?.tasks || []).map(
+        ({ id, title, items }) => ({
+          id,
+          title,
+          items: items.map(({ id, content, completed }) => ({
+            id,
+            content,
+            completed,
+          })),
+        })
+      );
+    } catch (error: unknown) {
+      if (error instanceof TypeError) {
+        throw new ServerNotRespondingError();
       } else {
-        throw new InternalServerError();
+        throw error;
       }
     }
-
-    return transformKeys(data.data?.tasks || []).map(
-      ({ id, title, items }) => ({
-        id,
-        title,
-        items: items.map(({ id, content, completed }) => ({
-          id,
-          content,
-          completed,
-        })),
-      })
-    );
   },
   async deleteTask(taskId: number): Promise<void> {
     const token = Cookies.get("jwt");
