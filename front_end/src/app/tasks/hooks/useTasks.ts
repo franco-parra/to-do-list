@@ -10,6 +10,7 @@ import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [deletingTaskIds, setDeletingTaskIds] = useState(new Set<number>());
   const [error, setError] = useState<
     | ServerNotRespondingError
     | ResourceDeletionError
@@ -66,6 +67,10 @@ export function useTasks() {
   }, []);
 
   const deleteTask = useCallback(async (task: Task) => {
+    setDeletingTaskIds(
+      (oldDeletingTaskIds) => new Set(oldDeletingTaskIds.add(task.id))
+    );
+
     try {
       if (task.isPersisted) {
         await taskService.deleteTask(task.id);
@@ -83,6 +88,12 @@ export function useTasks() {
       } else if (error instanceof Error) {
         setError(new UnexpectedError(error.message));
       }
+    } finally {
+      setDeletingTaskIds((oldDeletingTaskIds) => {
+        const newDeletingTaskIds = new Set(oldDeletingTaskIds);
+        newDeletingTaskIds.delete(task.id);
+        return newDeletingTaskIds;
+      });
     }
   }, []);
 
@@ -94,5 +105,6 @@ export function useTasks() {
     addTask,
     updateTask,
     deleteTask,
+    deletingTaskIds,
   };
 }

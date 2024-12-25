@@ -12,15 +12,18 @@ import { Trash2, Plus, Save, RotateCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTaskManager } from "../hooks/useTaskManager";
 import { Task } from "../types/task";
+import { Loader2 } from "lucide-react";
 
 export default function TaskItem({
   task,
   onUpdate,
   onDelete,
+  isDeleting,
 }: {
   task: Task;
   onUpdate: (task: Task) => void;
   onDelete: (task: Task) => void;
+  isDeleting: boolean;
 }) {
   const taskManager = useTaskManager(task, onUpdate);
 
@@ -102,9 +105,18 @@ export default function TaskItem({
             variant="destructive"
             size="sm"
             onClick={() => onDelete(task)}
+            disabled={isDeleting}
           >
-            <Trash2 className="h-4 w-4" />
-            Eliminar
+            {isDeleting ? (
+              <>
+                <Loader2 className="animate-spin" /> Eliminando
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+              </>
+            )}
           </Button>
         </div>
       </CardFooter>

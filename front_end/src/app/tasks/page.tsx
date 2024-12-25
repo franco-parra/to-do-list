@@ -16,6 +16,7 @@ export default function TaskList() {
     addTask,
     updateTask,
     deleteTask,
+    deletingTaskIds,
   } = useTasks();
   const { toast } = useToast();
 
@@ -43,6 +44,7 @@ export default function TaskList() {
             task={task}
             onUpdate={updateTask}
             onDelete={deleteTask}
+            isDeleting={deletingTaskIds.has(task.id)}
           />
         ))}
       </div>
