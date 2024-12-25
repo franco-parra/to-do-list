@@ -22,7 +22,18 @@ export function useTasks() {
     try {
       setIsLoading(true);
       const data = await taskService.fetchTasks();
-      setTasks(data);
+      setTasks(
+        data.map(({ id, title, items }) => ({
+          id,
+          title,
+          items: items.map(({ id, content, completed }) => ({
+            id,
+            content,
+            completed,
+          })),
+          isPersisted: true,
+        }))
+      );
     } catch (error: unknown) {
       if (
         error instanceof ServerNotRespondingError ||
@@ -43,6 +54,7 @@ export function useTasks() {
       id: Date.now(),
       title: "",
       items: [],
+      isPersisted: false,
     };
     setTasks((prev) => [...prev, newTask]);
   }, []);
@@ -53,11 +65,13 @@ export function useTasks() {
     );
   }, []);
 
-  const deleteTask = useCallback(async (taskId: number) => {
+  const deleteTask = useCallback(async (task: Task) => {
     try {
-      await taskService.deleteTask(taskId);
+      if (task.isPersisted) {
+        await taskService.deleteTask(task.id);
+      }
       setTasks((oldTasks) =>
-        oldTasks.filter((oldTask) => oldTask.id !== taskId)
+        oldTasks.filter((oldTask) => oldTask.id !== task.id)
       );
     } catch (error: unknown) {
       if (

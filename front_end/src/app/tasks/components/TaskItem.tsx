@@ -20,7 +20,7 @@ export default function TaskItem({
 }: {
   task: Task;
   onUpdate: (task: Task) => void;
-  onDelete: (taskId: number) => void;
+  onDelete: (task: Task) => void;
 }) {
   const taskManager = useTaskManager(task, onUpdate);
 
@@ -101,7 +101,7 @@ export default function TaskItem({
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => onDelete(task.id)}
+            onClick={() => onDelete(task)}
           >
             <Trash2 className="h-4 w-4" />
             Eliminar

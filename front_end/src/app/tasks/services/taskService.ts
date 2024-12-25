@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import { ApiResponse, TaskApiData } from "../types/api";
+import { ApiResponse, TaskApiData, TaskDto } from "../types/api";
 import { Task } from "../types/task";
 import { transformKeys } from "@/app/tasks/utils/transformKeys";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
@@ -10,14 +10,14 @@ import { ServerNotRespondingError } from "@/app/auth/errors/ServerNotRespondingE
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const taskService = {
-  async fetchTasks(): Promise<Task[]> {
+  async fetchTasks() {
     const token = Cookies.get("jwt");
 
     try {
       const response = await fetch(`${API_URL}/tasks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data: ApiResponse<TaskApiData> = await response.json();
+      const data: ApiResponse<{ tasks: TaskDto[] }> = await response.json();
 
       if (!response.ok) {
         if ("errors" in data) {
@@ -27,17 +27,7 @@ export const taskService = {
         }
       }
 
-      return transformKeys(data.data?.tasks || []).map(
-        ({ id, title, items }) => ({
-          id,
-          title,
-          items: items.map(({ id, content, completed }) => ({
-            id,
-            content,
-            completed,
-          })),
-        })
-      );
+      return transformKeys(data.data?.tasks || []);
     } catch (error: unknown) {
       if (error instanceof TypeError) {
         throw new ServerNotRespondingError();
