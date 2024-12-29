@@ -6,11 +6,13 @@ import { InternalServerError } from "@/app/auth/errors/InternalServerError";
 import { UnexpectedError } from "@/app/auth/errors/UnexpectedError";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
+import { ResourceUpdateError } from "../errors/ResourceUpdateError";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingTaskIds, setDeletingTaskIds] = useState(new Set<number>());
+  const [updatingTaskIds, setUpdatingTaskIds] = useState(new Set<number>());
   const [error, setError] = useState<
     | ServerNotRespondingError
     | ResourceDeletionError
@@ -60,11 +62,39 @@ export function useTasks() {
     setTasks((prev) => [...prev, newTask]);
   }, []);
 
-  const updateTask = useCallback((updatedTask: Task) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-    );
-  }, []);
+  const updateTask = useCallback(
+    async (updatedTask: Task): Promise<boolean> => {
+      setUpdatingTaskIds(
+        (oldUpdatingTaskIds) => new Set(oldUpdatingTaskIds.add(updatedTask.id))
+      );
+
+      try {
+        await taskService.updateTask(updatedTask);
+        setTasks((prev) =>
+          prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+        );
+        return true;
+      } catch (error: unknown) {
+        if (
+          error instanceof ServerNotRespondingError ||
+          error instanceof ResourceUpdateError ||
+          error instanceof InternalServerError
+        ) {
+          setError(error);
+        } else if (error instanceof Error) {
+          setError(new UnexpectedError(error.message));
+        }
+        return false;
+      } finally {
+        setUpdatingTaskIds((oldUpdatingTaskIds) => {
+          const newUpdatingTaskIds = new Set(oldUpdatingTaskIds);
+          newUpdatingTaskIds.delete(updatedTask.id);
+          return newUpdatingTaskIds;
+        });
+      }
+    },
+    []
+  );
 
   const deleteTask = useCallback(async (task: Task) => {
     setDeletingTaskIds(
@@ -106,5 +136,6 @@ export function useTasks() {
     updateTask,
     deleteTask,
     deletingTaskIds,
+    updatingTaskIds,
   };
 }

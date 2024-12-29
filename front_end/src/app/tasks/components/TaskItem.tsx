@@ -19,11 +19,13 @@ export default function TaskItem({
   onUpdate,
   onDelete,
   isDeleting,
+  isUpdating,
 }: {
   task: Task;
-  onUpdate: (task: Task) => void;
+  onUpdate: (task: Task) => Promise<boolean>;
   onDelete: (task: Task) => void;
   isDeleting: boolean;
+  isUpdating: boolean;
 }) {
   const taskManager = useTaskManager(task, onUpdate);
 
@@ -96,10 +98,18 @@ export default function TaskItem({
           <Button
             size="sm"
             onClick={taskManager.saveChanges}
-            disabled={!taskManager.hasChanges}
+            disabled={!taskManager.hasChanges || isUpdating}
           >
-            <Save className="h-4 w-4" />
-            Guardar
+            {isUpdating ? (
+              <>
+                <Loader2 className="animate-spin" /> Actualizando
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Guardar
+              </>
+            )}
           </Button>
           <Button
             variant="destructive"

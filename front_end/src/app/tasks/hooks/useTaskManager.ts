@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { Task } from "../types/task";
 
-export function useTaskManager(task: Task, onUpdate: (task: Task) => void) {
+export function useTaskManager(
+  task: Task,
+  onUpdate: (task: Task) => Promise<boolean>
+) {
   const [editedTask, setEditedTask] = useState(task);
   const [lastSavedTask, setLastSavedTask] = useState(task);
   const [newItemContent, setNewItemContent] = useState("");
@@ -52,10 +55,14 @@ export function useTaskManager(task: Task, onUpdate: (task: Task) => void) {
     }
   }, [newItemContent]);
 
-  const saveChanges = useCallback(() => {
-    onUpdate({ ...editedTask });
-    setLastSavedTask(editedTask);
-  }, [editedTask]);
+  const saveChanges = useCallback(async () => {
+    if (editedTask.isPersisted) {
+      const success = await onUpdate({ ...editedTask });
+      if (success) {
+        setLastSavedTask(editedTask);
+      }
+    }
+  }, [editedTask, lastSavedTask]);
 
   const restoreLastSaved = useCallback(() => {
     setEditedTask(lastSavedTask);
