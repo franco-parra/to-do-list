@@ -30,7 +30,7 @@ export function useTaskManager(
     setEditedTask((oldTask) => ({
       ...oldTask,
       items: oldTask.items.map((item) =>
-        item.id === itemId ? { ...item, text: newText } : item
+        item.id === itemId ? { ...item, content: newText } : item
       ),
     }));
   }, []);
