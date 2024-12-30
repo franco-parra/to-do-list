@@ -38,7 +38,9 @@ export function useTaskManager(
   const deleteItem = useCallback((itemId: number) => {
     setEditedTask((oldTask) => ({
       ...oldTask,
-      items: oldTask.items.filter((item) => item.id !== itemId),
+      items: oldTask.items.map((item) =>
+        item.id === itemId ? { ...item, isDeleted: true } : item
+      ),
     }));
   }, []);
 
@@ -48,7 +50,15 @@ export function useTaskManager(
         ...oldTask,
         items: [
           ...oldTask.items,
-          { id: Date.now(), content: newItemContent, completed: false },
+          {
+            id: Date.now(),
+            taskId: oldTask.id,
+            content: newItemContent,
+            completed: false,
+            isUpdated: false,
+            isDeleted: false,
+            isNew: true,
+          },
         ],
       }));
       setNewItemContent("");

@@ -7,6 +7,7 @@ import { UnexpectedError } from "@/app/auth/errors/UnexpectedError";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
 import { ResourceUpdateError } from "../errors/ResourceUpdateError";
+import { itemService } from "../services/itemService";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,10 +30,14 @@ export function useTasks() {
         data.map(({ id, title, items }) => ({
           id,
           title,
-          items: items.map(({ id, content, completed }) => ({
+          items: items.map(({ id, taskId, content, completed }) => ({
             id,
+            taskId,
             content,
             completed,
+            isUpdated: false,
+            isDeleted: false,
+            isNew: false,
           })),
           isPersisted: true,
         }))
@@ -69,7 +74,18 @@ export function useTasks() {
       );
 
       try {
-        await taskService.updateTask(updatedTask);
+        let promises = [
+          taskService.updateTask(updatedTask),
+          ...updatedTask.items.map((item) =>
+            item.isDeleted
+              ? itemService.deleteItem(item)
+              : item.isNew
+              ? itemService.addItem(item)
+              : itemService.updateItem(item)
+          ),
+        ];
+
+        await Promise.all(promises);
         setTasks((prev) =>
           prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
         );

@@ -47,30 +47,33 @@ export default function TaskItem({
           ></div>
         </div>
         <div className="space-y-2">
-          {taskManager.editedTask.items.map((item) => (
-            <div key={item.id} className="flex items-center space-x-2">
-              <Checkbox
-                checked={item.completed}
-                onCheckedChange={() => taskManager.toggleItem(item.id)}
-              />
-              <Input
-                value={item.content}
-                onChange={(e) =>
-                  taskManager.updateItem(item.id, e.target.value)
-                }
-                className={`flex-grow ${
-                  item.completed ? "line-through text-gray-500" : ""
-                }`}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => taskManager.deleteItem(item.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+          {taskManager.editedTask.items.map(
+            (item) =>
+              !item.isDeleted && (
+                <div key={item.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={item.completed}
+                    onCheckedChange={() => taskManager.toggleItem(item.id)}
+                  />
+                  <Input
+                    value={item.content}
+                    onChange={(e) =>
+                      taskManager.updateItem(item.id, e.target.value)
+                    }
+                    className={`flex-grow ${
+                      item.completed ? "line-through text-gray-500" : ""
+                    }`}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => taskManager.deleteItem(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )
+          )}
           <div className="flex space-x-2 mt-2">
             <Input
               value={taskManager.newItemContent}

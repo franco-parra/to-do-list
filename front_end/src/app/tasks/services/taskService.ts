@@ -73,7 +73,7 @@ export const taskService = {
           "Content-Type": "application/json",
         },
         method: "PUT",
-        body: JSON.stringify({ task }),
+        body: JSON.stringify({ task: { title: task.title } }),
       });
 
       if (!response.ok) {
