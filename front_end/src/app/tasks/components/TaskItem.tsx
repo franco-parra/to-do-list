@@ -14,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Trash2, Plus, Save, RotateCcw } from "lucide-react";
+import { Trash2, Plus, Save, RotateCcw, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTaskManager } from "../hooks/useTaskManager";
 import { Task } from "../types/task";
@@ -38,12 +38,26 @@ export default function TaskItem({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <Input
-          value={taskManager.editedTask.title}
-          onChange={(e) => taskManager.updateTitle(e.target.value)}
-          className="text-lg font-semibold"
-          placeholder="Nueva tarea"
-        />
+        <div className="flex gap-2">
+          <Input
+            value={taskManager.editedTask.title}
+            onChange={(e) => taskManager.updateTitle(e.target.value)}
+            className="text-lg font-semibold"
+            placeholder="Nueva tarea"
+          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button variant="ghost" size="icon">
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generar ítems</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
