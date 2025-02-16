@@ -99,7 +99,7 @@ export default function TaskItem({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Button onClick={taskManager.addItem}>
+                  <Button onClick={taskManager.addItem} size="icon">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
