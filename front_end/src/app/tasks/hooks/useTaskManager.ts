@@ -45,7 +45,8 @@ export function useTaskManager(
   }, []);
 
   const addItem = useCallback(() => {
-    if (newItemContent.trim()) {
+    const trimmedContent = newItemContent.trim();
+    if (trimmedContent) {
       setEditedTask((oldTask) => ({
         ...oldTask,
         items: [
@@ -53,7 +54,7 @@ export function useTaskManager(
           {
             id: Date.now(),
             taskId: oldTask.id,
-            content: newItemContent,
+            content: trimmedContent,
             completed: false,
             isUpdated: false,
             isDeleted: false,

@@ -99,7 +99,12 @@ export default function TaskItem({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Button onClick={taskManager.addItem} size="icon">
+                  <Button
+                    variant="ghost"
+                    onClick={taskManager.addItem}
+                    size="icon"
+                    disabled={taskManager.newItemContent.trim() === ""}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
