@@ -1,0 +1,3 @@
+fastapi[standard]
+huggingface_hub
+python-dotenv
