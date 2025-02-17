@@ -1,9 +1,20 @@
 from huggingface_hub import InferenceClient
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List, Optional
 import os
 import ast
 import re
+
+class Task(BaseModel):
+    title: str
+    items: list[str]
+
+class ResponseModel(BaseModel):
+    status: str
+    message: str
+    data: Optional[Task] = None
 
 # Load environment variables
 load_dotenv()
@@ -39,11 +50,14 @@ def create_messages(task: str):
     return messages
 
 
-@app.post("/generate-items")
+@app.post("/generate-items", response_model=ResponseModel)
 def generate_tasks(task: str):
     # Verify that credentials are properly configured
     if not HF_MODEL or not HF_TOKEN:
-        raise HTTPException(status_code=500, detail="Hugging Face credentials are not configured")
+        return ResponseModel(
+            status="error", 
+            message="Hugging Face credentials are not configured"
+        )
 
     attempt = 0
     last_error = None
@@ -59,24 +73,21 @@ def generate_tasks(task: str):
 
             # Extract the list from the response using regex
             content = completion.choices[0].message.content
-            print('content', content)
-            content = re.search("\[(.*?)\]", content)
+            cleaned_content = re.search("\[(.*?)\]", content)
 
-            if not content:
-                raise ValueError(f"Could not extract a valid list from the response. Response: {content}")
-            
             # Parse the string representation of the list into a Python list
-            items = ast.literal_eval(f"[{content.group(1)}]")
-            return {
-                "status": "success", 
-                "attempts": attempt + 1,
-                "data": { 
-                    "task": { 
-                        "title": task, 
-                        "items": items 
-                    }
-                }
-            }
+            try:
+                items = ast.literal_eval(f"[{cleaned_content.group(1)}]")
+                return ResponseModel(
+                    status="success", 
+                    message="Task items successfully generated", 
+                    data=Task(
+                        title=task, 
+                        items=items
+                    )
+                )
+            except Exception as e:
+                raise ValueError(f"Could not extract a valid list from the response. Response: {content}")
         except Exception as e:
             attempt += 1
             last_error = str(e)
@@ -84,8 +95,7 @@ def generate_tasks(task: str):
                 continue
 
     # Return error response if all retries failed   
-    return {
-        "status": "error",
-        "message": f"Error after {MAX_RETRIES} attempts. Last error: {last_error}",
-        "data": None
-    }
+    return ResponseModel(
+        status="error",
+        message=f"Error after {MAX_RETRIES} attempts. Last error: {last_error}"
+    )
