@@ -1,20 +1,30 @@
 from huggingface_hub import InferenceClient
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 import os
 import ast
 import re
 
 class Task(BaseModel):
     title: str
-    items: list[str]
+
+class Item(BaseModel):
+    content: str
 
 class ResponseModel(BaseModel):
     status: str
     message: str
-    data: Optional[Task] = None
+    data: Optional[list[Item]] = None
+    errors: Optional[list] = None
+
+class InvalidListError(Exception):
+    def __init__(self, message: str, status_code: int):
+        self.message = message
+        self.status_code = status_code
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +50,10 @@ EXAMPLE_CONVERSATIONS = [
 
 app = FastAPI()
 
+# CORS configuration
+origins = ["http://localhost:3000"]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
 def create_messages(task: str):
     """
     Creates the message array for the API request by copying the examples
@@ -49,9 +63,13 @@ def create_messages(task: str):
     messages.append({"role": "user", "content": f"Tarea: {task}"})
     return messages
 
+@app.exception_handler(InvalidListError)
+async def invalid_list_handler(request: Request, exc: InvalidListError):
+    content = ResponseModel(status="error", message=exc.message).model_dump()
+    return JSONResponse(status_code=exc.status_code, content=content)
 
 @app.post("/generate-items", response_model=ResponseModel)
-def generate_tasks(task: str):
+def generate_tasks(task: Task):
     # Verify that credentials are properly configured
     if not HF_MODEL or not HF_TOKEN:
         return ResponseModel(
@@ -66,36 +84,31 @@ def generate_tasks(task: str):
         try:
             client = InferenceClient(model=HF_MODEL, token=HF_TOKEN)
             completion = client.chat.completions.create(
-                messages=create_messages(task), 
+                messages=create_messages(task.title), 
                 max_tokens=500,
                 temperature=0.1 # Controls response randomness
             )
 
             # Extract the list from the response using regex
             content = completion.choices[0].message.content
-            cleaned_content = re.search("\[(.*?)\]", content)
+            cleaned_content = re.search(r"\[(.*?)\]", content)
 
             # Parse the string representation of the list into a Python list
             try:
-                items = ast.literal_eval(f"[{cleaned_content.group(1)}]")
+                contents: list[str] = ast.literal_eval(f"[{cleaned_content.group(1)}]")
+                data = [Item(content=c).model_dump() for c in contents]
                 return ResponseModel(
                     status="success", 
                     message="Task items successfully generated", 
-                    data=Task(
-                        title=task, 
-                        items=items
-                    )
+                    data=data
                 )
             except Exception as e:
-                raise ValueError(f"Could not extract a valid list from the response. Response: {content}")
+                raise InvalidListError(f"The LLM response produced a string that cannot be transformed into a list. Response: {content}", status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             attempt += 1
-            last_error = str(e)
+            last_error = e
             if attempt < MAX_RETRIES:
                 continue
 
     # Return error response if all retries failed   
-    return ResponseModel(
-        status="error",
-        message=f"Error after {MAX_RETRIES} attempts. Last error: {last_error}"
-    )
+    raise last_error
