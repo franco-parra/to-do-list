@@ -1,5 +1,11 @@
 import Cookies from "js-cookie";
-import { ApiResponse, TaskApiData, TaskDto } from "../types/api";
+import {
+  ApiResponse,
+  FastApiResponse,
+  TaskApiData,
+  TaskDto,
+} from "../types/api";
+import { LLMResponseError } from "../errors/LLMResponseError";
 import { Task } from "../types/task";
 import { transformKeys } from "@/app/tasks/utils/transformKeys";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
@@ -7,8 +13,10 @@ import { InternalServerError } from "@/app/auth/errors/InternalServerError";
 import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
 import { ServerNotRespondingError } from "@/app/auth/errors/ServerNotRespondingError";
 import { ResourceUpdateError } from "../errors/ResourceUpdateError";
+import { TaskItem } from "../types/taskItem";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const INFERENCE_API_URL = "http://localhost:8000";
 
 export const taskService = {
   async fetchTasks() {
@@ -85,6 +93,46 @@ export const taskService = {
           throw new InternalServerError();
         }
       }
+    } catch (error: unknown) {
+      if (error instanceof TypeError) {
+        throw new ServerNotRespondingError();
+      } else {
+        throw error;
+      }
+    }
+  },
+  async generateTaskItems(task: Task): Promise<Array<TaskItem>> {
+    try {
+      const response = await fetch(`${INFERENCE_API_URL}/generate-items`, {
+        method: "POST",
+        body: JSON.stringify({ title: task.title }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data: ApiResponse<Array<{ content: string }>> =
+        await response.json();
+
+      if (!response.ok) {
+        if ("status" in data && data["status"] === "error") {
+          throw new LLMResponseError();
+        } else {
+          throw new InternalServerError();
+        }
+      }
+
+      return (
+        data.data?.map((item, index) => ({
+          id: Date.now() + index,
+          taskId: task.id,
+          content: item.content,
+          completed: false,
+          isUpdated: false,
+          isDeleted: false,
+          isPersisted: false,
+          isNew: true,
+        })) || []
+      );
     } catch (error: unknown) {
       if (error instanceof TypeError) {
         throw new ServerNotRespondingError();

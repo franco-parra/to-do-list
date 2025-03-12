@@ -5,6 +5,10 @@ export interface ApiResponse<T> {
   errors?: null | { [key: string]: string };
 }
 
+export interface FastApiResponse {
+  detail: Array<{ loc: [string, number]; msg: string; type: string }>;
+}
+
 export interface TaskDto {
   createdAt: string;
   description: string;

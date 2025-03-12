@@ -18,7 +18,9 @@ import { Trash2, Plus, Save, RotateCcw, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTaskManager } from "../hooks/useTaskManager";
 import { Task } from "../types/task";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function TaskItem({
   task,
@@ -33,7 +35,18 @@ export default function TaskItem({
   isDeleting: boolean;
   isUpdating: boolean;
 }) {
+  const { toast } = useToast();
   const taskManager = useTaskManager(task, onUpdate);
+
+  useEffect(() => {
+    if (taskManager.error) {
+      toast({
+        title: taskManager.error.title,
+        description: taskManager.error.message,
+        variant: "destructive",
+      });
+    }
+  }, [taskManager.error]);
 
   return (
     <Card className="flex flex-col h-full">
@@ -48,8 +61,17 @@ export default function TaskItem({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Button variant="ghost" size="icon">
-                  <Sparkles className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => taskManager.generateItems()}
+                  disabled={taskManager.updatingItemIds.has(task.id)}
+                >
+                  {taskManager.updatingItemIds.has(task.id) ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
