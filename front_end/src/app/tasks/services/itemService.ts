@@ -5,6 +5,7 @@ import { InternalServerError } from "@/app/auth/errors/InternalServerError";
 import { ServerNotRespondingError } from "@/app/auth/errors/ServerNotRespondingError";
 import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 import { ResourceCreationError } from "../errors/ResourceCreationError";
+import { ApiResponse } from "../types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -95,14 +96,17 @@ export const itemService = {
         }),
       });
 
+      const data: ApiResponse<{ item: TaskItem }> = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         if ("errors" in data) {
           throw new ResourceCreationError(item);
         } else {
           throw new InternalServerError();
         }
       }
+
+      return data.data?.item;
     } catch (error: unknown) {
       if (error instanceof TypeError) {
         throw new ServerNotRespondingError();

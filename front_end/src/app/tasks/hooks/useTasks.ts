@@ -8,6 +8,7 @@ import { ResourceDeletionError } from "../errors/ResourceDeletionError";
 import { ResourceRetrievalError } from "../errors/ResourceRetrievalError";
 import { ResourceUpdateError } from "../errors/ResourceUpdateError";
 import { itemService } from "../services/itemService";
+import { TaskItem } from "../types/taskItem";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -73,19 +74,58 @@ export function useTasks() {
         (oldUpdatingTaskIds) => new Set(oldUpdatingTaskIds.add(updatedTask.id))
       );
 
-      try {
-        let promises = [
-          taskService.updateTask(updatedTask),
-          ...updatedTask.items.map((item) =>
-            item.isDeleted
-              ? itemService.deleteItem(item)
-              : item.isNew
-              ? itemService.addItem(item)
-              : itemService.updateItem(item)
-          ),
-        ];
+      const updateItems = async (items: Array<TaskItem>) => {
+        for (const item of items) {
+          await itemService.updateItem(item);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      };
 
-        await Promise.all(promises);
+      const createItems = async (items: Array<TaskItem>) => {
+        const results: Array<TaskItem | undefined> = [];
+        for (const item of items) {
+          const result = await itemService.addItem(item);
+          results.push(result);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        return results;
+      };
+
+      const deleteItems = async (items: Array<TaskItem>) => {
+        for (const item of items) {
+          await itemService.deleteItem(item);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      };
+
+      try {
+        const newItems = updatedTask.items.filter(
+          (item) => item.isNew && !item.isDeleted
+        );
+        const updatedItems = updatedTask.items.filter(
+          (item) => !item.isNew && item.isUpdated
+        );
+        const deletedItems = updatedTask.items.filter(
+          (item) => !item.isNew && item.isDeleted
+        );
+
+        const [createdItems] = await Promise.all([
+          createItems(newItems),
+          updateItems(updatedItems),
+          deleteItems(deletedItems),
+          taskService.updateTask(updatedTask),
+        ]);
+
+        if (createdItems) {
+          createdItems.map((createdItem) => {
+            updatedTask.items.map((item) => {
+              if (item.id !== createdItem?.id) return item;
+              return { ...item, id: createdItem.id };
+            });
+          });
+        }
+
+        updatedTask.items = updatedTask.items.filter((item) => !item.isDeleted);
         setTasks((prev) =>
           prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
         );
